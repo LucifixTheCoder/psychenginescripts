@@ -91,6 +91,6 @@ function onCountdownStarted()
   end
 end
 --hahahahhahahahhahahahhahahahahahahahahahahahahhah :3
-function _tweenStart(t) if tweenStarts[t] then tweenStarts[t]() end end
-function _customIntroTweens(t) if tweenEnds[t] then tweenEnds[t]() end end
-function _tweenUpdate(t, p) if tweenUpdates[t] then tweenUpdates[t](p) end end
+function _tweenStart(t) if tweenStarts[t] then tweenStarts[t]() end; tweenStarts[t] = nil end
+function _customIntroTweens(t) if tweenEnds[t] then tweenEnds[t]() end; tweenEnds[t] = nil end
+function _tweenUpdate(t, p) if tweenUpdates[t] then tweenUpdates[t](p) end; tweenUpdates[t] = nil end
