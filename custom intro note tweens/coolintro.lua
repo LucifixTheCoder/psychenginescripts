@@ -1,4 +1,3 @@
---every function in this table is called 4 times for each note
 tweens = {
   --[[
   --EXAMPLES
@@ -13,9 +12,12 @@ tweens = {
     --duration: NO CLUE!!!!!!
     --options: options for the flxtween, supports onComplete and onStart!! cool!!
   dad = function(i, isPlayer, strum, set, get, tween)
-    local d = downscroll and -1 or 1
-    set('y', get 'y' + 900*d)
+    --this function is called 4 times for each strum (should work with multi key things too)
+    local d = downscroll and -1 or 1 --value that multiplies the y based off if downscroll is enabled or not
+    set('y', get 'y' + 900*d) --puts the strum up by 900 (sets y to its y + 900)
+    --tweens like flxtween
     tween({y = get 'y' - 920*d}, 0.5, {startDelay = 0.5 + (0.2 * i), ease = 'cubeOut', onComplete = function()
+      --this function is called when the tween ends, after that do another tween
       tween({y = get 'y' + 30*d}, 0.25, {ease = 'cubeIn', onComplete = function()
         tween({y = get 'y' - 10*d}, 0.25/2, {ease = 'backOut'})
       end})
@@ -33,6 +35,9 @@ function onStartCountdown()
   setProperty('skipArrowStartTween', true)
   luaDebugMode = true
 end
+tweenStarts = {}
+tweenEnds = {}
+tweenUpdates = {}
 function onCountdownStarted()
   local stuff = function(func, char)
     local isPlayer = char == boyfriendName
@@ -50,30 +55,10 @@ function onCountdownStarted()
         runHaxeCode('setVar("CUSTOM_INTRO_tweenstuff", null);')
         setProperty('CUSTOM_INTRO_tweenstuff', {vars = vars, duration = duration, options = options, i = i})
         if options.onComplete then
-          local a = onTweenCompleted
-          local b = options.onComplete
-          local tagtag = tag
-          function onTweenCompleted(tag)
-            if a then
-              a(tag)
-            end
-            if tag == tagtag then
-              b()
-            end
-          end
+          tweenEnds[tag] = options.onComplete
         end
         if options.onStart then
-          local a = onTweenStarted
-          local b = options.onStart
-          local tagtag = tag
-          function onTweenStarted(tag)
-            if a then
-              a(tag)
-            end
-            if tag == tagtag then
-              b()
-            end
-          end
+          tweenStarts[tag] = options.onStart
         end
         local idiotTag = '"'..tag:gsub('"', '\\"')..'"'
         runHaxeCode([[
@@ -82,11 +67,10 @@ function onCountdownStarted()
             stuff.options.ease = FlxEase.]]..(options.ease or '')..[[;
           var strum = game.]]..strum..[[.members[stuff.i];
           if(stuff.options == null)
-            stuff.options = {onComplete: function(twn:FlxTween) {}, onStart: function(twn:FlxTween) {}};
-          stuff.options.onComplete = function(twn:FlxTween)
-            game.callOnLuas('onTweenCompleted', []]..idiotTag..[[]);
-          stuff.options.onStart = function(twn:FlxTween)
-            game.callOnLuas('onTweenStarted', []]..idiotTag..[[]);
+            stuff.options = {onComplete: _ -> {}, onStart: _ -> {}, onUpdate: _ -> {}};
+          stuff.options.onComplete = _ -> game.callOnLuas('_customIntroTweens', []]..idiotTag..[[]);
+          stuff.options.onStart = _ -> game.callOnLuas('_tweenStart', []]..idiotTag..[[]);
+          stuff.options.onUpdate = t -> game.callOnLuas('_tweenUpdate', []]..idiotTag..[[, t.percent]);
           game.modchartTweens.set(]]..idiotTag..[[, FlxTween.tween(strum, stuff.vars, stuff.duration, stuff.options));
           setVar('CUSTOM_INTRO_tweenstuff', null);
         ]])
@@ -106,3 +90,7 @@ function onCountdownStarted()
     end
   end
 end
+--hahahahhahahahhahahahhahahahahahahahahahahahahhah :3
+function _tweenStart(t) if tweenStarts[t] then tweenStarts[t]() end end
+function _customIntroTweens(t) if tweenEnds[t] then tweenEnds[t]() end end
+function _tweenUpdate(t, p) if tweenUpdates[t] then tweenUpdates[t](p) end end
