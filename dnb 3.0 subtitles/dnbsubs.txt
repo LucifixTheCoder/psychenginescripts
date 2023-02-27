@@ -1,0 +1,2 @@
+v1: sub (leave blank if loading from txt)
+v2: size, typespeed, showtime
