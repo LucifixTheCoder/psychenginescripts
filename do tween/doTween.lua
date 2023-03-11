@@ -1,112 +1,51 @@
-function doTween(Object, Values, Duration, Options)
-  Options.startDelay = Options.startDelay or 0
-  local function quickError(txt)
-    runHaxeCode('game.addTextToDebug("doTween: " + "'..txt:gsub('"', '\\"')..'", 0xFFFF0000);')
-  end
-  local rh = runHaxeCode
-  rh("setVar('luaVarHolder', null);")
-  runHaxeCode = function(code, vars)
-    if not vars then
-      return rh(code)
-    else
-      setProperty('luaVarHolder', vars)
-      local stringVars = {}
-      for k,v in pairs(vars) do
-          table.insert(stringVars, "var "..k.." = getVar('luaVarHolder')."..k..";")
-      end
-      rh(table.concat(stringVars, '\n')..'\n'..code)
-      setProperty('luaVarHolder', nil)
-    end
-  end
-  if not notfirst then
-    notfirst = true
-    addHaxeLibrary('FunkinLua')
-    runHaxeCode([[
-      function getProperty(variable:String)
-      {
-        var result:Dynamic = null;
-              var killMe:Array<String> = variable.split('.');
-              if(killMe.length > 1)
-                  result = FunkinLua.getVarInArray(FunkinLua.getPropertyLoopThingWhatever(killMe), killMe[killMe.length-1]);
-              else
-                  result = FunkinLua.getVarInArray(FunkinLua.getInstance(), variable);
-          
-              return result;
-      }
-    ]])
-  end
-  local tweenNum, Options = tweenNum or 0, Options or {}
-  local coolTag = Object..'_TWEEN'..tweenNum
-  if Options.onComplete then
-    local callBack = Options.onComplete
-    runTimer(coolTag, Duration)
-    local a = onTimerCompleted
-    onTimerCompleted = function(tag)
-      if a then
-        a()
-      end
-      if tag == coolTag then
-        callBack()
-      end
-    end
-    Options.onComplete = nil
-  end
-  if Options.onStart then
-    local coolTag = Object..'_TWEEN_ONSTART'..tweenNum
-    local callBack = Options.onStart
-    runTimer(coolTag, Options.startDelay)
-    local a = onTimerCompleted
-    onTimerCompleted = function(tag)
-      if a then
-        a()
-      end
-      if tag == coolTag then
-        callBack()
-      end
-    end
-    Options.onStart = nil
-  end
-  local excludeFromStringing = {'ease'}
-  --check for null object references
-  if getProperty(Object) == nil then --if the object doesn't exist
-    quickError('Object not found: '..Object)
-    return;
-  end
-  local valueLength = 0
-  for k,v in pairs(Values) do
-    if getProperty(Object..'.'..k) == Object..'.'..k or not getProperty(Object..'.'..k) then --if a value doesn't exist
-      quickError('Null object value: '..k)
-      Values[k] = nil
-    elseif type(getProperty(Object..'.'..k)) ~= 'number' then
-      quickError('Object value not a number: '..k)
-    else
-      valueLength = valueLength + 1
-    end
-  end
-  if valueLength == 0 then --if theres no values at all
-    quickError('No values found!')
-    return;
-  end
-  -- local swag = {Values, Duration, Options}
-  -- for i,thing in pairs(swag) do
-  --   swag[i] = fixType(thing)
-  -- end
-  runHaxeCode([[
-    var obj = getProperty(Object);
-    if(['game', 'instance', 'playstate'].contains(ObjectLower))
-      obj = game;
-      
-    if(Options != null)
-      Options.ease = FlxEase.]]..(Options.ease or 'linear')..[[;
-    
-    game.modchartTweens.set(tweenTag, FlxTween.tween(obj, Values, Duration, Options));
-    
-  ]], {
-    Object = Object,
-    ObjectLower = Object:lower(),
-    Values = Values,
-    Duration = Duration,
-    Options = Options,
-    tweenTag = coolTag
-  })
+_tweenData = {length = 0}
+function doTween(object, values, duration, options, doErrors)
+	options = options or {}
+	addHaxeLibrary 'FunkinLua'
+	addHaxeLibrary 'Reflect'
+	_tweenData.length = _tweenData.length + 1
+	local tag = '___DOTWEEN'.._tweenData.length
+	_tweenData[tag] = options
+	runHaxeCode 'setVar("_tweenStuff", null);'
+	setProperty('_tweenStuff', {
+		object = object,
+		values = values,
+		duration = duration,
+		options = options,
+		has = { --maybe goes faster then??? idk
+			onComplete = options.onComplete and true or false,
+			onUpdate = options.onUpdate and true or false,
+			onStart = options.onStart and true or false,
+			ease = options.ease and true or false
+		},
+		tag = tag,
+		doErrors = doErrors and true or false
+	})
+	runHaxeCode[[
+		var data = getVar("_tweenStuff");
+		if(data.has.onComplete) data.options.onComplete = _ -> game.callOnLuas('_tweenComplete', [data.tag]);
+		if(data.has.onUpdate) data.options.onUpdate = t -> game.callOnLuas('_tweenUpdate', [data.tag, t.percent]);
+		if(data.has.onStart) data.options.onStart = _ -> game.callOnLuas('_tweenStart', [t.onStart]);
+		if(data.has.ease) data.options.ease = Reflect.field(FlxEase, data.options.ease);
+		var obj = FunkinLua.getObjectDirectly(data.object);
+		game.modchartTweens.set(data.tag, FlxTween.tween(obj, data.values, data.duration, data.options));
+	]]
+end
+function _tweenComplete(tag) 
+	if _tweenData[tag] and _tweenData[tag].onComplete then 
+		_tweenData[tag].onComplete()
+		_tweenData[tag].onComplete = nil 
+		_tweenData[tag].onUpdate = nil 
+	end 
+end
+function _tweenUpdate(tag, p) 
+	if _tweenData[tag] and _tweenData[tag].onUpdate then 
+		_tweenData[tag].onUpdate(p)
+	end 
+end
+function _tweenStart(tag) 
+	if _tweenData[tag] and _tweenData[tag].onStart then 
+		_tweenData[tag].onStart()
+		_tweenData[tag].onStart = nil 
+	end 
 end
