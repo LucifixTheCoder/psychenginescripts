@@ -4,7 +4,7 @@ function doTween(object, values, duration, options, doErrors)
 	addHaxeLibrary 'FunkinLua'
 	addHaxeLibrary 'Reflect'
 	_tweenData.length = _tweenData.length + 1
-	local tag = '___DOTWEEN'.._tweenData.length
+	local tag = options.tag or '___DOTWEEN'.._tweenData.length
 	_tweenData[tag] = options
 	runHaxeCode 'setVar("_tweenStuff", null);'
 	setProperty('_tweenStuff', {
