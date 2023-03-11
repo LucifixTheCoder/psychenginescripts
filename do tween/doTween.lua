@@ -1,5 +1,5 @@
 _tweenData = {length = 0}
-function doTween(object, values, duration, options, doErrors)
+function doTween(object, values, duration, options)
 	options = options or {}
 	addHaxeLibrary 'FunkinLua'
 	addHaxeLibrary 'Reflect'
@@ -18,8 +18,7 @@ function doTween(object, values, duration, options, doErrors)
 			onStart = options.onStart and true or false,
 			ease = options.ease and true or false
 		},
-		tag = tag,
-		doErrors = doErrors and true or false
+		tag = tag
 	})
 	runHaxeCode[[
 		var data = getVar("_tweenStuff");
