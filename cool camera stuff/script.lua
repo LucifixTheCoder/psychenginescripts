@@ -14,6 +14,7 @@ cams : table of cams, example:
 
 camList : list of all cams
 windowList : list of cams that look like the window
+windowCams : array of the window cams
 keyedColor : color thats keyed out and is also the color of the borders
 
 
@@ -57,6 +58,10 @@ for i,cam in pairs(camList) do
     end
   }
 end
+windowCams = {}
+for i,cam in pairs(windowList) do
+  windowCams[cam] = cams[cam]
+end
 
 function onCreatePostPost() --after all the stuff is done
   --example modchart
@@ -65,10 +70,10 @@ function onCreatePostPost() --after all the stuff is done
 end
 function onUpdatePost()
   -- example modchart
-  -- for i,cam in pairs(windowList) do
-  --   cams[cam]:setPos(math.cos(elapsedTime) * screenRes.width/12, math.sin(elapsedTime * 2) * screenRes.height/12)
-  --   cams[cam].angle = math.sin(elapsedTime * 3) * 5
-  --   cams[cam].scale = (math.sin(elapsedTime * 7) + 4) * 0.2
+  -- for i,cam in pairs(windowCams) do
+  --   cam:setPos(math.cos(elapsedTime) * screenRes.width/12, math.sin(elapsedTime * 2) * screenRes.height/12)
+  --   cam.angle = math.sin(elapsedTime * 3) * 5
+  --   cam.scale = (math.sin(elapsedTime * 7) + 4) * 0.2
   -- end
   -- cams.camOut.angle = math.sin(elapsedTime) * 25
   -- cams.camOut.scale = (math.sin(elapsedTime * 7) + 4) * 0.1
@@ -207,7 +212,7 @@ function onUpdate(elapsed)
     cams.camHUD:setProperty('zoom', (lerp(camScale * (2/3) * cams.camHUD.scale, getProperty'camHUD.zoom', boundTo(1 - (elapsed * 3.125 * getProperty'camZoomingDecay' * getProperty'playbackRate'), 0, 1))))
   end
   for i,cam in pairs(cams) do
-    cam:copyProperties({'x', 'y', 'angle'})
+    cam:copyProperties{'x', 'y', 'angle'}
   end
 end
 function opponentNoteHit()

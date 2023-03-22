@@ -57,7 +57,10 @@ function goodNoteHit(id, data, type, sus)
 	if dNotes[strumTime] then --check if theres chords/jumps/duals/whatevers notes there
 		local theGreatest = true --only play anim if its the greatest note
 		for k,v in pairs(dNotes[strumTime]) do
-			if data < v then theGreatest = false end
+			if data < v then 
+				theGreatest = false 
+				break;
+			end
 		end
 		if theGreatest then
 			playAnim('bf16x', 'sing'..table.concat(dNotes[strumTime])) --add it all together

@@ -41,10 +41,14 @@ function doTween(object, values, duration, options)
 		get = function(self, var)
 			return getProperty(self.tag..'.'..var)
 		end,
+		reTween = doTweenFromHelper,
 		destroyOnComplete = true --this is for the helper itself not the tween
 	}
 	_tweenData[tag].helper = helper
 	return helper
+end
+function doTweenFromHelper(helper)
+	return doTween(helper.object, helper.values, helper.duration, helper.options)
 end
 function _tweenComplete(tag) 
 	if _tweenData[tag] and _tweenData[tag].onComplete then 

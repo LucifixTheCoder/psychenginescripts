@@ -4,7 +4,7 @@ function onCreate() --load the shit
     addHaxeLibrary 'Type'
     addHaxeLibrary('FlxTypeText', 'flixel.addons.text')
     addHaxeLibrary 'ClientPrefs'
-    fixRH()
+    runHaxeCode "setVar('_subStuff', null);"
     luaDebugMode = true
     if useFromText then
         subs = getTextFromFile('data/'..songPath..'/subs.txt')
@@ -24,15 +24,17 @@ function onEvent(n, sub, v2)
             subs.index = subs.index + 1
             sub = subs[subs.index]
         end
+        setProperty('subStuff', {sub = sub, size = size, typespeed = typespeed, showtime = showtime})
         runHaxeCode([[
-            var sub = new FlxTypeText(0, 0, FlxG.width, sub, 36);
+            var data = getVar('subStuff');
+            var sub = new FlxTypeText(0, 0, FlxG.width, data.sub, 36);
             sub.y = (FlxG.height / 2) - 200;
             sub.setFormat(Paths.font("vcr.ttf"), size, 0xFFFFFF, 'center', Type.resolveEnum('flixel.text.FlxTextBorderStyle').OUTLINE, 0xFF000000);
             sub.antialiasing = ClientPrefs.globalAntialiasing;
             sub.borderSize = 2;
             sub.cameras = [game.camHUD];
-            sub.start(typespeed / game.playbackRate, false, false, [], () -> {
-                game.modchartTimers.set(sub + 'timer', new FlxTimer().start(showtime / game.playbackRate, _ -> {
+            sub.start(data.typespeed / game.playbackRate, false, false, [], () -> {
+                game.modchartTimers.set(sub + 'timer', new FlxTimer().start(data.showtime / game.playbackRate, _ -> {
                     game.modchartTweens.set(sub + ' tween', FlxTween.tween(sub, {alpha: 0}, 0.5 / game.playbackRate, {onComplete: _ -> {
                         game.remove(sub);
                         sub.destroy();
@@ -41,23 +43,7 @@ function onEvent(n, sub, v2)
             });
             sub.screenCenter(0x01);
             game.add(sub);
-        ]], {sub = sub, size = size, typespeed = typespeed, showtime = showtime})
-    end
-end
-function fixRH()
-    local rh = runHaxeCode
-    rh("setVar('luaVarHolder', null);")
-    runHaxeCode = function(code, vars)
-    if not vars then
-        return rh(code)
-    else
-        setProperty('luaVarHolder', vars)
-        local stringVars = {}
-        for k,v in pairs(vars) do
-            table.insert(stringVars, "var "..k.." = getVar('luaVarHolder')."..k..";")
-        end
-        rh(table.concat(stringVars, '\n')..'\n'..code)
-        setProperty('luaVarHolder', nil)
-    end
+        ]])
+        setProperty('subStuff', nil)
     end
 end
