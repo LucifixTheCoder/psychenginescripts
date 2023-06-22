@@ -1,1 +1,1 @@
-# a lot of lua scripts... one million dollars... this is.... uhh,.... i forgot :(
+half lua scripts were found and put in here. credits to the original owners of the lua scripts the scripts i made are in a folder called "LucifixScripts" and credits to mayo78 for the other half of scripts
